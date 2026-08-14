@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팽창하는 우주 학습지</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .fig { background:#0f172a; border-radius:12px; padding:10px; margin:14px 0; }
+  .fig svg { width:100%; height:auto; display:block; }
+  .qbox { border-top:2px solid var(--line); padding-top:18px; margin-top:18px; }
+  .qbox:first-of-type { border-top:0; padding-top:0; margin-top:0; }
+  .qno { display:inline-block; background:var(--brand); color:#fff; border-radius:8px;
+         padding:2px 12px; font-size:17px; margin-right:8px; }
+  .qtitle { font-size:21px; font-weight:bold; margin:0 0 12px; }
+  .ox-row { display:flex; gap:12px; }
+  .ox-row .opt { flex:1; text-align:center; font-size:26px; font-weight:bold; }
+  .numwrap { display:flex; align-items:center; gap:12px; }
+  .numwrap input { max-width:220px; }
+  .numwrap .unit { font-size:22px; font-weight:bold; }
+  .ans { margin-top:12px; padding:12px 16px; border-radius:10px; font-size:18px; }
+  .ans.ok { background:var(--ok-bg); border-left:6px solid var(--ok); }
+  .ans.no { background:var(--no-bg); border-left:6px solid var(--no); }
+  .savebar {
+    position:sticky; bottom:0; background:#fff; border-top:2px solid var(--line);
+    padding:14px 18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; z-index:50;
+    margin:0 -18px; box-shadow:0 -4px 14px rgba(0,0,0,.06);
+  }
+  .savebar .grow { flex:1 1 auto; font-size:18px; color:var(--sub); }
+  .scoreband { background:var(--band); border-radius:10px; padding:12px 16px; font-size:21px; font-weight:bold; margin:0 0 16px; }
+  .locked input, .locked textarea, .locked select { background:#f3f4f6; color:var(--sub); }
+
+  @media print {
+    .fig text[fill="#e2e8f0"] { fill:#111 !important; }
+    .fig circle[stroke="#e2e8f0"] { stroke:#444 !important; }
+    /* 문항이 20개라 공용값(9pt)에서 조금 키운다 */
+    html, body { font-size: 10pt; line-height: 1.4; }
+    .qtitle { font-size: 10pt; }
+    .opt { font-size: 9pt; }
+    .ox-row .opt { font-size: 10pt; }
+    .numwrap input, .numwrap .unit { font-size: 10pt; }
+    textarea {
+      font-size: 10pt; line-height: 6.8mm;
+      min-height: 12.5mm; height: 13mm;
+      background: repeating-linear-gradient(#fff 0, #fff 6.8mm, #bbb 6.8mm, #bbb 7mm) !important;
+    }
+    table.grid th, table.grid td { font-size: 8.5pt; }
+    .fig svg { height: 28mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>📝 팽창하는 우주 학습지</h1>
+  <span class="badge">중학교 3학년 과학 · [9과23-03]</span>
+  <span class="spacer"></span>
+  <a class="home" href="index.html" target="ex-lab" data-win>🎈 실험실 열기 ↗</a>
+</div>
+
+<div class="wrap">
+
+  <div class="print-only print-head">
+    <h1>팽창하는 우주 학습지</h1>
+    <p class="sub">중학교 3학년 과학 · 별과 우주 [9과23-03] — 팽창하는 우주</p>
+    <div class="who">3학년 (　　　)반 　(　　　)번 　이름 (　　　　　　　　)</div>
+  </div>
+
+  <div class="card no-print">
+    <h2>이렇게 하세요</h2>
+    <div class="hint">
+      <b>1</b> 오른쪽 위 <b>🎈 실험실 열기</b>를 눌러 실험실을 <b>새 창</b>으로 띄우고 나란히 놓습니다.<br>
+      <b>2</b> 문제를 <b>먼저 예측해서</b> 쓴 다음, 실험실에서 확인합니다.<br>
+      <b>3</b> 다 쓰면 맨 아래 <b>PDF로 저장하기</b>를 누릅니다.
+    </div>
+    <div class="warnbox"><b>제출은 한 번뿐입니다.</b> PDF를 저장하면 답을 고칠 수 없습니다.</div>
+  </div>
+
+  <div class="scoreband hidden" id="scoreBand"></div>
+  <div class="card" id="sheet"></div>
+
+  <div class="savebar">
+    <span class="grow" id="saveMsg">다 썼으면 PDF로 저장해 제출하세요.</span>
+    <button type="button" class="btn" id="btnAnswers">정답 확인 (PDF 저장 후 열림) 🔒</button>
+    <button type="button" class="btn" id="btnClear">쓴 내용 지우기</button>
+    <button type="button" class="btn primary big" id="btnPdf">PDF로 저장하기</button>
+  </div>
+
+  <div class="card no-print" id="aboutCard">
+    <h2>ℹ️ 개인정보 안내</h2>
+    <p class="lead">
+      학년·반·학번·이름은 <b>PDF를 만드는 순간에만</b> 물어보고 <b>PDF 파일 안에만</b> 들어갑니다.
+    </p>
+  </div>
+
+</div>
+
+<script src="js/pdf.js"></script>
+<script>
+/* =========================================================
+   worksheet.html — 학습지 문항 · 자동 채점 · PDF 제출
+   ---------------------------------------------------------
+   문항은 선생님의 종이 학습지
+   「Ⅶ. 별과 우주 / 2. 우주 팽창과 우주 탐사 (1) 팽창하는 우주」
+   의 탐구 과정 · 실험 결과 표 · 물음 네 가지 · 핵심 정리를 그대로 따라간다.
+   ⚠ 실험 결과 값(3·6·9 → 5·10·15 → 10·20·30)은 **종이와 같은 값**이다.
+   ========================================================= */
+(function () {
+  "use strict";
+  var K = window.PdfKit;
+
+  var SHEET = [
+    {
+      step: "1단계 · 풍선 실험",
+      lead: "실험실의 🎈 <b>풍선 불기</b> 장면을 열어 두고 답하세요. " +
+            "풍선에 스티커 1·2·3 을 붙이고 <b>작게 → 크게 → 더 크게</b> 불며 거리를 잽니다.",
+      figure: true,
+      items: [
+        { type: "tbl", q: "실험실에서 세 단계로 불어 가며 스티커 사이의 거리를 읽어 표를 채우세요.",
+          head: ["단계", "스티커 1-2", "스티커 2-3", "스티커 1-3"],
+          rows: ["① 작게 불었을 때", "② 크게 불었을 때", "③ 더 크게 불었을 때"] },
+        { type: "choice", q: "풍선을 <b>크게 불수록</b> 스티커 사이의 거리는 어떻게 변할까요?",
+          opts: ["<b>모두 멀어진다</b>", "모두 가까워진다", "어떤 것은 멀어지고 어떤 것은 가까워진다"], ans: 0,
+          why: "<b>모두 멀어집니다.</b> 스티커는 풍선 표면의 같은 자리에 붙어 있고 " +
+               "<b>스스로 움직이지 않았는데도</b> 그렇습니다. 사이의 표면이 늘어났기 때문이에요." },
+        { type: "num", q: "① 에서 <b>3 cm</b> 였던 스티커 1-2 사이는 ③ 에서 몇 cm 가 되었나요?",
+          unit: "cm", ans: 10, tol: 0.5,
+          why: "<b>10 cm</b> 입니다. 3 → 5 → 10 cm 로 늘어났어요." },
+        { type: "num", q: "① 에서 <b>9 cm</b> 였던 스티커 1-3 사이는 ③ 에서 몇 cm 가 되었나요?",
+          unit: "cm", ans: 30, tol: 1,
+          why: "<b>30 cm</b> 입니다. 9 → 15 → 30 cm 로 늘어났어요." },
+        { type: "choice", q: "① 에서 스티커 사이 거리가 <b>멀수록</b>, ②·③ 에서 <b>늘어난 정도</b>는 어떠한가요?",
+          opts: ["<b>더 많이 늘어난다</b>", "더 적게 늘어난다", "모두 똑같이 늘어난다"], ans: 0,
+          why: "<b>처음에 멀수록 더 많이 늘어납니다.</b><br>" +
+               "① → ③ 에서 1-2 는 3 → 10 cm (<b>7 cm</b> 증가), 1-3 은 9 → 30 cm (<b>21 cm</b> 증가). " +
+               "처음 거리가 3배였으니 늘어난 양도 정확히 <b>3배</b>예요." },
+        { type: "text", q: "위 표에서 <b>늘어난 양</b>이 처음 거리와 어떤 관계인지 설명해 보세요.",
+          why: "<b>처음 거리에 비례</b>합니다.<br>" +
+               "늘어난 양 = (배율 − 1) × <b>처음 거리</b> 이기 때문입니다. " +
+               "처음에 2배 멀리 있던 것은 2배 더 많이, 3배 멀리 있던 것은 3배 더 많이 늘어납니다." }
+      ]
+    },
+    {
+      step: "2단계 · 팽창의 중심",
+      lead: "실험실의 🎯 <b>중심은 어디?</b> 장면에서 기준 스티커를 바꿔 보세요(미션 3).",
+      items: [
+        { type: "choice", q: "<b>스티커 1</b> 에서 보면 스티커 2와 3은 어떻게 보일까요?",
+          opts: ["둘 다 가까워진다", "<b>둘 다 멀어지고, 더 먼 3이 더 많이 멀어진다</b>",
+                 "3만 멀어지고 2는 그대로다"], ans: 1,
+          why: "둘 다 멀어지고, <b>더 멀리 있던 스티커 3이 더 많이</b> 멀어집니다." },
+        { type: "choice", q: "이번엔 <b>스티커 2</b> 에서 본다면?",
+          opts: ["스티커 2가 중심이므로 나머지는 그대로다",
+                 "<b>여기서도 나머지가 모두 멀어져 보인다</b>",
+                 "나머지가 가까워져 보인다"], ans: 1,
+          why: "<b>여기서도 똑같습니다.</b> 어느 스티커에서 보아도 나머지가 모두 멀어져 보여요." },
+        { type: "text", q: "풍선이 팽창할 때 <b>중심은 어디</b>일까요? " +
+               "풍선을 돌려 다른 각도에서 보아도 그곳이 중심일까요?",
+          why: "<b>특별한 중심이 없습니다.</b><br>" +
+               "어느 스티커에서 보아도 나머지가 모두 멀어져 보이므로, 어느 곳도 " +
+               "‘여기가 팽창의 중심이다’라고 할 수 없습니다. 풍선을 돌려 보아도 마찬가지예요.<br>" +
+               "우주 공간도 <b>특별한 중심 없이 모든 방향으로 균일하게</b> 팽창합니다." },
+        { type: "ox", q: "우주에는 팽창이 시작된 <b>특별한 중심</b>이 한 곳 있다.", ans: false,
+          why: "없습니다. 우주 공간은 <b>특별한 중심 없이 모든 방향으로 균일하게</b> 팽창하고 있습니다." }
+      ]
+    },
+    {
+      step: "3단계 · 모형이 나타내는 것",
+      lead: "",
+      items: [
+        { type: "choice", q: "풍선의 <b>표면</b>이 우주 공간을 나타낸다면, <b>스티커</b>는 무엇을 나타낼까요?",
+          opts: ["별 하나", "<b>은하</b>", "행성"], ans: 1,
+          why: "<b>은하</b>입니다. 풍선 표면 → 우주 공간, 스티커 → 은하, 풍선을 부는 것 → 우주가 팽창하는 것." },
+        { type: "ox", q: "스티커가 스스로 기어가서 서로 멀어진 것이다.", ans: false,
+          why: "아닙니다. 스티커는 풍선 표면의 <b>같은 자리</b>에 붙어 있습니다. " +
+               "<b>사이의 표면이 늘어났을</b> 뿐이에요.<br>" +
+               "은하도 마찬가지입니다 — 스스로 달아나는 것이 아니라 <b>은하 사이의 공간이 늘어나는</b> 것입니다." },
+        { type: "text", q: "풍선 모형에서 <b>풍선 표면 · 스티커 · 풍선을 부는 것</b>이 " +
+               "각각 무엇을 나타내는지 써 보세요.",
+          why: "· 풍선의 <b>표면</b> → <b>우주 공간</b><br>" +
+               "· 풍선 위의 <b>스티커</b> → <b>은하</b><br>" +
+               "· 풍선을 <b>부는 것</b> → <b>우주가 팽창하는 것</b>" }
+      ]
+    },
+    {
+      step: "4단계 · 허블이 알아낸 것",
+      lead: "실험실의 🌌 <b>은하의 후퇴</b> 장면에서 확인하세요(미션 5).",
+      items: [
+        { type: "choice", q: "<b>허블</b>이 관측을 통해 알아낸 것은?",
+          opts: ["대부분의 은하들이 우리은하로 <b>가까워지고</b> 있다",
+                 "<b>대부분의 은하들이 우리은하로부터 멀어지고 있다</b>",
+                 "은하들은 제자리에 멈춰 있다"], ans: 1,
+          why: "<b>대부분의 은하들이 우리은하로부터 멀어지고 있다</b>는 것을 알아냈고, " +
+               "그 까닭을 <b>우주가 팽창하고 있기 때문</b>이라고 설명했습니다." },
+        { type: "choice", q: "서로 <b>멀리 떨어져 있는 은하</b>일수록 멀어지는 빠르기는?",
+          opts: ["<b>더 빠르다</b>", "더 느리다", "모두 같다"], ans: 0,
+          why: "<b>더 빠릅니다.</b> 풍선에서 처음에 멀리 있던 스티커가 더 많이 늘어난 것과 같은 이야기예요." },
+        { type: "choice", q: "거리를 가로축, 멀어지는 빠르기를 세로축에 놓고 은하들을 찍으면 어떤 모양이 될까요?",
+          opts: ["<b>직선</b>", "원", "아무 규칙 없이 흩어진다"], ans: 0,
+          why: "<b>직선</b>이 됩니다. 빠르기가 거리에 <b>비례</b>하기 때문입니다." },
+        { type: "num", q: "거리가 <b>8배</b> 먼 은하는 멀어지는 빠르기가 몇 배일까요?",
+          unit: "배", ans: 8, tol: 0.5,
+          why: "<b>8배</b>입니다. 빠르기가 거리에 비례하니까요." },
+        { type: "ox", q: "은하들이 스스로 힘을 내어 달아나고 있기 때문에 서로 멀어진다.", ans: false,
+          why: "아닙니다. 은하가 스스로 달아나는 것이 아니라 <b>은하 사이의 공간이 늘어나기</b> 때문입니다. " +
+               "풍선의 스티커가 스스로 기어가지 않았던 것과 같아요." }
+      ]
+    },
+    {
+      step: "5단계 · 핵심 내용 정리",
+      lead: "",
+      items: [
+        { type: "choice", q: "우주 공간은 어떻게 팽창하고 있을까요?",
+          opts: ["한 중심에서 바깥으로만",
+                 "<b>특별한 중심 없이 모든 방향으로 균일하게</b>",
+                 "일부 방향으로만"], ans: 1,
+          why: "<b>특별한 중심 없이 모든 방향으로 균일하게</b> 팽창하고 있습니다." },
+        { type: "text", q: "이 단원에서 배운 것을 <b>한 문장</b>으로 정리해 보세요.<br>" +
+               "<em>(‘우주’와 ‘멀어진다’를 넣어서 써 보면 좋습니다.)</em>",
+          why: "예시 — <b>“우주가 팽창하기 때문에 은하들이 서로 멀어지고 있으며, " +
+               "멀리 있는 은하일수록 더 빠르게 멀어진다. 우주에는 특별한 중심이 없다.”</b>" }
+      ]
+    }
+  ];
+
+  var ctrls = [], submitted = false, lastInfo = null, lastPages = null;
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+
+  /* 풍선 세 단계 그림 */
+  function balloonFigure() {
+    function one(cx, r, label, d12, d13) {
+      return '<circle cx="' + cx + '" cy="105" r="' + r + '" fill="rgba(248,250,252,0.10)" ' +
+             'stroke="#e2e8f0" stroke-width="1.5"/>' +
+             '<circle cx="' + (cx - r * 0.6) + '" cy="' + (105 - r * 0.5) + '" r="6" fill="#f87171"/>' +
+             '<circle cx="' + (cx + r * 0.15) + '" cy="' + (105 - r * 0.75) + '" r="6" fill="#60a5fa"/>' +
+             '<circle cx="' + (cx + r * 0.7) + '" cy="' + (105 + r * 0.45) + '" r="6" fill="#4ade80"/>' +
+             '<text x="' + cx + '" y="' + (105 + r + 26) + '" fill="#e2e8f0" font-size="14" ' +
+             'font-weight="bold" text-anchor="middle">' + label + '</text>' +
+             '<text x="' + cx + '" y="' + (105 + r + 44) + '" fill="#e2e8f0" font-size="12" ' +
+             'text-anchor="middle">1-2 ' + d12 + ' · 1-3 ' + d13 + '</text>';
+    }
+    return '<div class="fig"><svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">' +
+      one(100, 32, "① 작게", "3cm", "9cm") +
+      one(310, 48, "② 크게", "5cm", "15cm") +
+      one(530, 64, "③ 더 크게", "10cm", "30cm") +
+      '</svg></div>';
+  }
+
+  function build() {
+    var host = document.getElementById("sheet");
+    host.innerHTML = "";
+    var qno = 0;
+    SHEET.forEach(function (stepDef, si) {
+      host.appendChild(el("h2", null, '<span class="step">' + (si + 1) + '</span>' + stepDef.step));
+      if (stepDef.lead) host.appendChild(el("p", "lead", stepDef.lead));
+      if (stepDef.figure) host.appendChild(el("div", null, balloonFigure()).firstChild);
+      stepDef.items.forEach(function (it) {
+        qno++;
+        var box = el("div", "qbox");
+        box.appendChild(el("p", "qtitle", '<span class="qno">' + qno + '</span>' + it.q));
+        var c = renderItem(it, box);
+        c.def = it; c.no = qno; c.step = si;
+        c.ansBox = el("div", "ans hidden");
+        box.appendChild(c.ansBox);
+        ctrls.push(c);
+        host.appendChild(box);
+      });
+    });
+    restore();
+  }
+
+  function renderItem(it, box) {
+    if (it.type === "choice" || it.type === "ox") {
+      var opts = it.type === "ox" ? ["O (맞다)", "X (아니다)"] : it.opts;
+      var wrap = el("div", it.type === "ox" ? "opts ox-row" : "opts");
+      wrap.style.display = "flex";
+      wrap.style.flexDirection = it.type === "ox" ? "row" : "column";
+      wrap.style.gap = "8px";
+      var pick = -1, btns = [];
+      opts.forEach(function (t, i) {
+        var b = el("button", "opt", (it.type === "ox" ? "" : "④①②③".charAt(i + 1) + " ") + t);
+        b.type = "button";
+        b.addEventListener("click", function () {
+          if (submitted) { K.toast("제출한 뒤에는 답을 고칠 수 없습니다.", "warn"); return; }
+          pick = i;
+          btns.forEach(function (x, j) { x.classList.toggle("on", j === i); });
+          save();
+        });
+        btns.push(b); wrap.appendChild(b);
+      });
+      box.appendChild(wrap);
+      var right = it.type === "ox" ? (it.ans ? 0 : 1) : it.ans;
+      return {
+        get: function () { return pick; },
+        set: function (v) { pick = v; btns.forEach(function (x, j) { x.classList.toggle("on", j === v); }); },
+        forPdf: function () { return pick < 0 ? "" : stripTags(opts[pick]); },
+        grade: function () { return pick === right; },
+        rightText: function () { return stripTags(opts[right]); },
+        lock: function () { btns.forEach(function (b) { b.disabled = true; }); },
+        markAnswer: function () {
+          btns.forEach(function (b, j) {
+            if (j === right) b.classList.add("right");
+            else if (j === pick) b.classList.add("wrong");
+          });
+        }
+      };
+    }
+
+    if (it.type === "num") {
+      var w = el("div", "numwrap");
+      var inp = el("input"); inp.type = "text"; inp.inputMode = "decimal";
+      inp.placeholder = "숫자만 쓰세요";
+      inp.addEventListener("input", save);
+      w.appendChild(inp); w.appendChild(el("span", "unit", it.unit || ""));
+      box.appendChild(w);
+      return {
+        get: function () { return inp.value; },
+        set: function (v) { inp.value = v || ""; },
+        forPdf: function () { return inp.value ? inp.value + " " + (it.unit || "") : ""; },
+        grade: function () {
+          var v = parseFloat(String(inp.value).replace(/[^0-9.\-]/g, ""));
+          return isFinite(v) && Math.abs(v - it.ans) <= (it.tol || 0.01);
+        },
+        rightText: function () { return it.ans + " " + (it.unit || ""); },
+        lock: function () { inp.disabled = true; }
+      };
+    }
+
+    if (it.type === "text") {
+      var ta = el("textarea");
+      ta.placeholder = "여기에 자기 말로 써 보세요.";
+      ta.addEventListener("input", save);
+      box.appendChild(ta);
+      return {
+        get: function () { return ta.value; },
+        set: function (v) { ta.value = v || ""; },
+        forPdf: function () { return ta.value; },
+        lock: function () { ta.disabled = true; }
+      };
+    }
+
+    if (it.type === "tbl") {
+      var scroll = el("div", "tablescroll");
+      var tb = el("table", "grid");
+      var thead = el("thead"), tr = el("tr");
+      it.head.forEach(function (t) { tr.appendChild(el("th", null, t)); });
+      thead.appendChild(tr); tb.appendChild(thead);
+      var body = el("tbody"), inputs = [];
+      it.rows.forEach(function (rowName) {
+        var r = el("tr");
+        r.appendChild(el("td", "left", "<b>" + rowName + "</b>"));
+        var line = [];
+        for (var ci = 1; ci < it.head.length; ci++) {
+          var td = el("td");
+          var i2 = el("input"); i2.type = "text";
+          i2.addEventListener("input", save);
+          td.appendChild(i2); r.appendChild(td); line.push(i2);
+        }
+        inputs.push(line); body.appendChild(r);
+      });
+      tb.appendChild(body); scroll.appendChild(tb); box.appendChild(scroll);
+      return {
+        get: function () { return inputs.map(function (l) { return l.map(function (i) { return i.value; }); }); },
+        set: function (v) {
+          if (!v) return;
+          v.forEach(function (l, ri) { (l || []).forEach(function (val, ci) { if (inputs[ri] && inputs[ri][ci]) inputs[ri][ci].value = val; }); });
+        },
+        forPdfTable: function () {
+          return [it.head].concat(inputs.map(function (l, ri) {
+            return [it.rows[ri]].concat(l.map(function (i) { return i.value || "-"; }));
+          }));
+        },
+        forPdf: function () { return ""; },
+        lock: function () { inputs.forEach(function (l) { l.forEach(function (i) { i.disabled = true; }); }); }
+      };
+    }
+
+    return { get: function () { return null; }, set: function () {}, forPdf: function () { return ""; }, lock: function () {} };
+  }
+
+  function save() {
+    if (submitted) return;
+    try { sessionStorage.setItem("ex_worksheet", JSON.stringify(ctrls.map(function (c) { return c.get(); }))); } catch (e) {}
+  }
+  function restore() {
+    try {
+      var v = JSON.parse(sessionStorage.getItem("ex_worksheet") || "null");
+      if (v && v.length === ctrls.length) ctrls.forEach(function (c, i) { c.set(v[i]); });
+    } catch (e) {}
+  }
+
+  function score() {
+    var got = 0, all = 0;
+    ctrls.forEach(function (c) { if (!c.grade) return; all++; if (c.grade()) got++; });
+    return { got: got, all: all };
+  }
+
+  function makePdf(info) {
+    var sc = score();
+    var doc = K.createDoc({
+      title: "팽창하는 우주 학습지",
+      subtitle: "중학교 3학년 과학 · 별과 우주 [9과23-03]",
+      meta: { grade: info.grade, cls: info.cls, num: info.num, name: info.name,
+              when: info.when, right: "자동 채점 " + sc.got + " / " + sc.all },
+      footer: "팽창하는 우주 실험실"
+    });
+    var qi = 0;
+    SHEET.forEach(function (stepDef) {
+      doc.h1(stepDef.step);
+      if (stepDef.lead) doc.p(stripTags(stepDef.lead), { size: 20, lh: 29 });
+      stepDef.items.forEach(function () {
+        var c = ctrls[qi++], it = c.def;
+        doc.h2(c.no + ". " + stripTags(it.q));
+        if (c.forPdfTable) {
+          var rows = c.forPdfTable();
+          doc.table(rows, rows[0].map(function (_, i) { return i === 0 ? 1.6 : 1; }));
+        } else {
+          doc.box(null, c.forPdf(), { minLines: it.type === "text" ? 3 : 1 });
+        }
+        if (c.grade) {
+          var ok = c.grade();
+          doc.mark(ok ? "정답" : "오답 · 정답은 " + c.rightText(), ok);
+        }
+      });
+      doc.gap(6);
+    });
+    doc.pageBreak();
+    doc.h1("정답과 해설");
+    var qj = 0;
+    SHEET.forEach(function (stepDef) {
+      stepDef.items.forEach(function () {
+        var c = ctrls[qj++];
+        if (!c.def.why) return;
+        doc.h2(c.no + ". " + stripTags(c.def.q));
+        doc.p(stripTags(c.def.why), { size: 21, lh: 30, color: "#111827" });
+        doc.gap(4);
+      });
+    });
+    return doc.finish();
+  }
+
+  function stripTags(s) {
+    return String(s || "").replace(/<br\s*\/?>/gi, " ").replace(/&nbsp;/g, " ").replace(/<[^>]+>/g, "");
+  }
+
+  function applyLockState() {
+    document.body.classList.toggle("locked", submitted);
+    document.getElementById("btnClear").classList.toggle("hidden", submitted);
+    document.getElementById("btnPdf").textContent = submitted ? "PDF 다시 받기" : "PDF로 저장하기";
+    document.getElementById("btnAnswers").textContent =
+      submitted ? "정답·해설 모두 보기" : "정답 확인 (PDF 저장 후 열림) 🔒";
+    if (submitted) {
+      var sc = score(), band = document.getElementById("scoreBand");
+      band.classList.remove("hidden");
+      band.textContent = "✅ 제출했습니다 · 자동 채점 " + sc.got + " / " + sc.all +
+                         " (서술·표는 선생님이 읽습니다)";
+      document.getElementById("saveMsg").textContent = "제출이 끝났습니다. 정답과 해설을 확인하세요.";
+      ctrls.forEach(function (c) { if (c.lock) c.lock(); });
+    }
+  }
+
+  function revealAnswers() {
+    ctrls.forEach(function (c) {
+      if (c.markAnswer) c.markAnswer();
+      if (!c.def.why) return;
+      var ok = c.grade ? c.grade() : null;
+      c.ansBox.className = "ans " + (ok === null ? "ok" : (ok ? "ok" : "no"));
+      c.ansBox.innerHTML = (ok === null ? "💡 <b>이렇게 생각해 보세요</b><br>"
+                                        : (ok ? "⭕ <b>정답입니다.</b><br>" : "❌ <b>정답은 「" + c.rightText() + "」 입니다.</b><br>"))
+                           + c.def.why;
+      c.ansBox.classList.remove("hidden");
+    });
+  }
+
+  function bind() {
+    document.getElementById("btnPdf").addEventListener("click", function () {
+      if (submitted) {
+        if (!lastInfo || !lastPages) return;
+        K.downloadBlob(K.buildPdf(lastPages), K.makeFileName("팽창하는우주학습지", lastInfo));
+        K.toast("다시 내려받았습니다.", "ok");
+        return;
+      }
+      if (!confirm("PDF로 저장하면 답을 고칠 수 없고 정답이 열립니다.\n다 썼는지 확인했나요?")) return;
+      K.askStudentInfo({}, function (info) {
+        try {
+          var pages = makePdf(info);
+          lastInfo = info; lastPages = pages;
+          K.downloadBlob(K.buildPdf(pages), K.makeFileName("팽창하는우주학습지", info));
+          submitted = true;
+          try { sessionStorage.removeItem("ex_worksheet"); } catch (e) {}
+          applyLockState(); revealAnswers();
+          K.toast("제출했습니다. 정답과 해설이 열렸습니다.", "ok");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (err) {
+          K.toast("PDF를 만들지 못했습니다: " + err.message, "no");
+        }
+      });
+    });
+
+    document.getElementById("btnClear").addEventListener("click", function () {
+      if (submitted) return;
+      if (!confirm("쓴 내용을 모두 지울까요?")) return;
+      ctrls.forEach(function (c) { c.set(c.def.type === "choice" || c.def.type === "ox" ? -1 : ""); });
+      try { sessionStorage.removeItem("ex_worksheet"); } catch (e) {}
+    });
+
+    document.getElementById("btnAnswers").addEventListener("click", function () {
+      if (!submitted) { K.toast("정답은 PDF로 저장(제출)한 뒤에 열립니다.", "warn"); return; }
+      revealAnswers();
+      K.toast("정답과 해설을 모두 열었습니다.", "ok");
+    });
+  }
+
+  build(); bind(); applyLockState();
+
+  window.EXSheet = {
+    ctrls: ctrls, score: score, makePdf: makePdf, SHEET: SHEET,
+    isSubmitted: function () { return submitted; },
+    forceSubmit: function (info) {
+      var pages = makePdf(info); lastInfo = info; lastPages = pages;
+      submitted = true; applyLockState(); revealAnswers();
+      return pages;
+    }
+  };
+})();
+</script>
+</body>
+</html>

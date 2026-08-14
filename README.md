@@ -1,0 +1,53 @@
+# 🎈 팽창하는 우주 실험실
+
+중학교 3학년 과학 「별과 우주」 — **우주가 팽창하고 있음을 모형으로 설명하기**.
+성취기준 **[9과23-03]**, 소단원 **(1) 팽창하는 우주**
+
+## 어떻게 여나
+
+**설치할 것이 없습니다.** `index.html` 을 더블클릭하면 바로 열립니다.
+
+| 화면 | 파일 | 하는 일 |
+|---|---|---|
+| 🎈 실험실 | `index.html` | 풍선을 불어 은하가 멀어지는 것을 본다 |
+| 📝 학습지 | `worksheet.html` | 20문항 (15문항 자동 채점) · 종이로도 뽑을 수 있다 |
+| 🗂️ 선생님용 | `teacher.html` | 제출한 PDF 를 파일 이름만 읽어 정리한다 |
+
+## 무엇을 보여 주나
+
+- **🎈 풍선 불기** — 선생님과 한 실험 그대로입니다.
+  스티커 1·2·3 사이가 **3·6·9 → 5·10·15 → 10·20·30 cm** 로 늘어나요.
+- **🎯 중심은 어디?** — 기준 스티커를 바꿔 보세요.
+  **어디서 보아도** 나머지가 멀어집니다 → 특별한 중심이 없다는 뜻이에요.
+- **🌌 은하의 후퇴** — 거리와 멀어지는 빠르기를 찍으면 **직선**이 됩니다(허블).
+
+## 이 앱이 남기고 싶은 한 문장
+
+> **은하가 스스로 달아나는 것이 아니라, 은하 사이의 공간이 늘어나는 것이다.**
+> 그래서 멀리 있는 은하일수록 더 빠르게 멀어지고, 특별한 중심은 없다.
+
+풍선 위의 스티커가 스스로 기어가지 않았던 것과 같습니다.
+
+## 미션 6개
+
+1. 🎈 크게 불면 어떻게 될까 · 2. 📏 누가 더 많이 늘었을까 · 3. 🎯 중심은 어디일까
+4. 🔵 스티커는 무엇을 나타낼까 · 5. 🚀 멀수록 빠르게 · 6. 🌌 우주는 팽창한다
+
+## 인쇄
+
+학습지를 열고 `Ctrl+P` — **A4 두 쪽**. 인쇄 창에서 **「배경 그래픽」**을 켜면 표 음영도 나옵니다.
+
+## 개인정보
+
+학년·반·학번·이름은 **PDF 를 만드는 순간에만** 물어보고 **PDF 안에만** 들어갑니다.
+
+## 만든 이야기 · 고칠 때 볼 것
+
+[CLAUDE.md](CLAUDE.md)
+
+같은 학년의 다른 단원 — [energy-keeper](https://github.com/science-creator/energy-keeper) ·
+[electromagnetic-induction](https://github.com/science-creator/electromagnetic-induction) ·
+[Electricity](https://github.com/science-creator/Electricity) ·
+[parallax](https://github.com/science-creator/parallax) ·
+[brightness](https://github.com/science-creator/brightness) ·
+[galaxy](https://github.com/science-creator/galaxy)

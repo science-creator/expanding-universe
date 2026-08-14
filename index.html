@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팽창하는 우주 실험실</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div class="top">
+  <h1>🎈 팽창하는 우주 실험실</h1>
+  <span class="badge">중학교 3학년 과학 · 별과 우주</span>
+  <span class="spacer"></span>
+  <a class="home" href="worksheet.html" target="ex-worksheet" data-win>📝 학습지 ↗</a>
+  <a class="home" href="teacher.html">선생님용 ▸</a>
+</div>
+
+<div class="wrap">
+
+  <div class="scenes" id="scenes">
+    <button type="button" class="scene-btn on" data-scene="balloon"><span class="em">🎈</span> 풍선 불기</button>
+    <button type="button" class="scene-btn" data-scene="center"><span class="em">🎯</span> 중심은 어디?</button>
+    <button type="button" class="scene-btn" data-scene="hubble"><span class="em">🌌</span> 은하의 후퇴</button>
+    <button type="button" class="scene-btn" data-scene="mission"><span class="em">🏆</span> 미션 도전</button>
+  </div>
+
+  <div class="card hidden" id="missionCard">
+    <h2>🏆 미션 도전 <span class="step">깬 미션 <span id="missionScore">0 / 6</span></span></h2>
+    <p class="lead">먼저 <b>예측</b>하고, 실제로 <b>확인</b>하세요. 성공하면 이유가 열립니다.</p>
+    <div class="mission-list" id="missionList"></div>
+    <div class="mission-body hidden" id="missionBody">
+      <h3 id="mTitle"></h3>
+      <p id="mStory"></p>
+      <div class="predict hidden" id="mPredict">
+        <div class="q" id="mQ"></div>
+        <div class="opts" id="mOpts"></div>
+      </div>
+      <div class="predict hidden" id="mGoals"></div>
+      <div class="verdict hidden" id="mVerdict"></div>
+    </div>
+  </div>
+
+  <div class="stage-wrap">
+
+    <div>
+      <div class="playbar">
+        <button type="button" class="btn" id="btnReset">↺ 처음으로</button>
+        <button type="button" class="btn" id="btnRecord">📋 지금 값 기록</button>
+      </div>
+
+      <div class="stage">
+        <canvas id="stage"></canvas>
+        <div class="stage-tip" id="tip"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h2>📋 실험 기록 <span class="step">학습지에 옮겨 적기</span></h2>
+        <p class="lead">궁금한 값이 나오면 <b>📋 지금 값 기록</b>을 누르세요.</p>
+        <div class="tablescroll">
+          <table class="grid">
+            <thead>
+              <tr><th>번호</th><th>단계</th><th>1-2 거리</th><th>2-3 거리</th><th>1-3 거리</th></tr>
+            </thead>
+            <tbody id="recBody"></tbody>
+          </table>
+        </div>
+        <p id="recEmpty" class="hint">아직 기록이 없습니다.</p>
+        <div class="btnrow"><button type="button" class="btn" id="btnClearRec">기록 지우기</button></div>
+      </div>
+
+      <div class="card">
+        <h2>🔎 무엇을 보고 있는 걸까?</h2>
+        <div class="hint">
+          <b>풍선 모형</b> — 풍선의 <b>표면</b>이 우주 공간, <b>스티커</b>가 은하다.
+          풍선을 불면 스티커가 <b>스스로 움직이지 않아도</b> 서로 멀어진다.<br>
+          <b>허블</b> — 대부분의 은하들이 우리은하로부터 <b>멀어지고 있다</b>는 것을 알아내고,
+          그 까닭을 <b>우주가 팽창하고 있기 때문</b>이라고 설명했다.
+        </div>
+        <div class="warnbox">
+          <b>이 앱의 결론은 두 가지입니다.</b><br>
+          ① <b>멀리 있을수록 더 빠르게 멀어집니다.</b> 처음에 멀리 있던 것일수록 늘어난 양이 큽니다.
+          은하가 스스로 달아나는 것이 아니라 <b>사이의 공간이 늘어나기</b> 때문이에요.<br>
+          ② <b>특별한 중심이 없습니다.</b> 어느 스티커에서 보아도 나머지가 모두 멀어져 보입니다.
+          우주는 <b>모든 방향으로 균일하게</b> 팽창합니다.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3 id="gaugeTitle">🎈 풍선</h3>
+        <p class="sub" id="gaugeSub">불수록 거리가 어떻게 변할까</p>
+        <div class="bars">
+          <div class="bar-row total">
+            <div class="bar-name"><span class="dot" style="background:#f87171"></span><span id="barName1">1-2</span></div>
+            <div class="bar-track" id="barA">
+              <div class="bar-fill" style="background:linear-gradient(90deg,#fecaca,#ef4444)"></div>
+              <div class="bar-val">0</div>
+            </div>
+          </div>
+          <div class="bar-row" id="rowB">
+            <div class="bar-name"><span class="dot" style="background:#4ade80"></span><span id="barName2">1-3</span></div>
+            <div class="bar-track" id="barB">
+              <div class="bar-fill" style="background:linear-gradient(90deg,#bbf7d0,#16a34a)"></div>
+              <div class="bar-val">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="ro"><b id="roName1">1-2 거리</b><span id="roVal1">-</span><i id="roUnit1"></i></div>
+          <div class="ro"><b id="roName2">2-3 거리</b><span id="roVal2">-</span><i id="roUnit2"></i></div>
+          <div class="ro"><b id="roName3">1-3 거리</b><span id="roVal3">-</span><i id="roUnit3"></i></div>
+          <div class="ro"><b id="roName4">배율</b><span id="roVal4">-</span><i id="roUnit4"></i></div>
+        </div>
+
+        <div class="formula">
+          <div id="fLaw"></div>
+          <div id="fWhy"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 id="graphTitle">📈 처음 거리와 늘어난 양</h3>
+        <p class="sub" id="graphSub">멀수록 더 많이 늘어난다</p>
+        <canvas class="graph" id="graph"></canvas>
+      </div>
+
+      <div class="panel">
+        <h3>🎛️ 조작</h3>
+
+        <div class="ctl" data-for="balloon center hubble mission" data-need="scale">
+          <label>풍선을 얼마나 불까? <span id="valScale">① 작게 (1.00 배)</span></label>
+          <input type="range" id="rngScale" min="1" max="3.33" step="0.01" value="1">
+        </div>
+
+        <div class="ctl" data-for="balloon mission" data-need="stage">
+          <label>학습지의 세 단계 <span></span></label>
+          <div class="chips" id="chipStage">
+            <button type="button" class="chip on" data-val="small">① 작게</button>
+            <button type="button" class="chip" data-val="big">② 크게</button>
+            <button type="button" class="chip" data-val="huge">③ 더 크게</button>
+          </div>
+        </div>
+
+        <div class="ctl" data-for="center mission" data-need="observer">
+          <label>어느 스티커에서 볼까? <span></span></label>
+          <div class="chips" id="chipObs">
+            <button type="button" class="chip on" data-val="1">🔴 스티커 1</button>
+            <button type="button" class="chip" data-val="2">🔵 스티커 2</button>
+            <button type="button" class="chip" data-val="3">🟢 스티커 3</button>
+          </div>
+        </div>
+
+        <div class="hint" style="font-size:16px;margin-top:16px">
+          <b>스티커는 은하, 풍선 표면은 우주 공간</b>입니다.
+          스티커는 스스로 움직이지 않아요 — <b>사이가 늘어날</b> 뿐입니다.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /stage-wrap -->
+
+  <div class="card">
+    <h2>📚 이 실험은 무엇과 이어질까</h2>
+    <div class="tablescroll">
+      <table class="grid">
+        <tr><th>성취기준</th><th>내용</th><th>여기서 하는 일</th></tr>
+        <tr><td>[9과23-03]</td>
+            <td class="left">우주가 팽창하고 있음을 모형으로 설명할 수 있다</td>
+            <td class="left">🎈 풍선 불기 · 🎯 중심은 어디? · 🌌 은하의 후퇴</td></tr>
+        <tr><td>[9과23-02]</td>
+            <td class="left">우리은하의 모양·크기·구성 천체 <em>(앞 소단원)</em></td>
+            <td class="left">우리은하 실험실</td></tr>
+      </table>
+    </div>
+    <div class="hint">
+      앞 소단원에서 <b>우리은하 하나</b>를 보았다면, 여기서는 <b>은하들이 서로 멀어지는</b> 우주 전체를 봅니다.
+    </div>
+  </div>
+
+</div>
+
+<script src="js/pdf.js"></script>
+<script src="js/universe.js"></script>
+<script src="js/lab.js"></script>
+</body>
+</html>
