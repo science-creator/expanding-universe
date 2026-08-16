@@ -83,7 +83,9 @@
     {
       id: 4, star: "🔵", title: "스티커는 무엇을 나타낼까",
       story: "풍선의 <b>표면</b>이 우주 공간을 나타낸다면, <b>스티커</b>는 무엇을 나타낼까?",
-      scene: "center", setup: { scale: 2, observer: 2 }, allow: ["observer", "scale"],
+      /* ⚠ 목표가 obs2 이므로 **기준을 2 로 두고 시작하면 안 된다** — 아무것도 안 해도 깨진다.
+         1 에서 시작해 학생이 직접 2 로 옮기게 한다. */
+      scene: "center", setup: { scale: 2, observer: 1 }, allow: ["observer", "scale"],
       predict: { q: "풍선 모형에서 스티커가 나타내는 것은?",
                  opts: ["별 하나", "<b>은하</b>", "행성"], ans: 1 },
       goals: [{ key: "obs2", text: "<b>스티커 2</b> 에서 보아 확인하기" }],
@@ -110,7 +112,9 @@
     {
       id: 6, star: "🌌", title: "우주는 팽창한다",
       story: "지금까지 본 것을 모아 보자. 풍선 실험이 우주에 대해 알려 준 것은 무엇일까?",
-      scene: "hubble", setup: { scale: 2.4 }, allow: ["scale"],
+      /* ⚠ 목표가 hubble(배율 > 1.05) 이므로 **2.4 로 두고 시작하면 안 된다.**
+         배율 1 에서 시작해 학생이 직접 불어 보게 한다. */
+      scene: "hubble", setup: { scale: 1 }, allow: ["scale"],
       predict: { q: "우주 팽창에 대한 설명으로 옳은 것은?",
                  opts: ["우주에는 팽창의 중심이 한 곳 있다",
                         "<b>특별한 중심 없이 모든 방향으로 균일하게 팽창한다</b>",
@@ -172,8 +176,11 @@
     g.closePath();
   }
 
-  /* 스티커를 풍선 위 '같은 자리'에 두기 위한 각도 (풍선을 불어도 각도는 그대로) */
-  var ANG = { 1: -Math.PI * 0.62, 2: -Math.PI * 0.16, 3: Math.PI * 0.42 };
+  /* 스티커를 풍선 위 '같은 자리'에 두기 위한 각도 (풍선을 불어도 각도는 그대로).
+     ⚠ **각도 간격이 곧 거리 비다.** 풍선 표면에서 잰 길이 = 반지름 × 각도 이므로
+        1-2 : 2-3 = 3 cm : 6 cm = **1 : 2** 를 반드시 지켜야 한다.
+        (예전에는 0.46π : 0.58π = 1 : 1.26 이라, 그림이 오른쪽 표와 다른 비를 말하고 있었다) */
+  var ANG = { 1: -Math.PI * 0.72, 2: -Math.PI * 0.42, 3: Math.PI * 0.18 };
 
   /* ---- 장면 ① 풍선 불기 ---- */
   function drawBalloon(g) {
@@ -194,6 +201,17 @@
     g.beginPath(); g.moveTo(cx - 6, cy + R); g.lineTo(cx + 6, cy + R); g.lineTo(cx, cy + R + 14);
     g.closePath(); g.fill();
 
+    /* 스티커 사이 — **풍선 표면을 따라** 그린다. 실제로 줄자를 대는 길이가 이것이다.
+       직선(현)으로 이으면 각도 비와 길이 비가 어긋나 표와 다른 그림이 된다.
+       1-3 은 따로 긋지 않는다 — 1-2 와 2-3 을 **이어 붙인 것**이 곧 1-3 이라
+       따로 그으면 오히려 길이가 어긋난다(안쪽·바깥쪽 어디에 그어도 반지름이 달라진다).
+       스티커보다 **먼저** 그려 동그라미와 번호를 가리지 않게 한다. */
+    [[1, 2, "#ef4444"], [2, 3, "#60a5fa"]].forEach(function (p) {
+      g.strokeStyle = p[2]; g.lineWidth = 4; g.lineCap = "round";
+      g.beginPath(); g.arc(cx, cy, R * 0.86, ANG[p[0]], ANG[p[1]]); g.stroke();
+    });
+    g.lineCap = "butt";
+
     /* 스티커 — 풍선 위 같은 각도에 붙어 있다 */
     var pos = {};
     U.STICKERS.forEach(function (s) {
@@ -206,12 +224,6 @@
       g.textAlign = "center"; g.textBaseline = "middle";
       g.fillText(String(s.id), x, y);
       g.textBaseline = "alphabetic";
-    });
-
-    /* 스티커 사이 선 */
-    [[1, 2], [2, 3], [1, 3]].forEach(function (p) {
-      g.strokeStyle = "rgba(226,232,240,.35)"; g.lineWidth = 1.5;
-      g.beginPath(); g.moveTo(pos[p[0]].x, pos[p[0]].y); g.lineTo(pos[p[1]].x, pos[p[1]].y); g.stroke();
     });
 
     g.fillStyle = COL.faint; g.font = "13px sans-serif"; g.textAlign = "center";
@@ -245,7 +257,9 @@
   /* ---- 장면 ② 중심은 어디? ---- */
   function drawCenter(g) {
     var cy = cssH * 0.34;
-    var left = cssW * 0.10, span = cssW * 0.80;
+    /* 오른쪽에 **화살표가 놓일 자리**를 남긴다. 스티커를 무대 끝까지 밀면
+       화살표를 줄일 수밖에 없어 길이 비가 눈에 안 들어온다. */
+    var left = cssW * 0.08, span = cssW * 0.58;
     var maxPos = U.BASE_POS[3] * (10 / 3);        // 가장 벌어졌을 때
 
     /* 한 줄 위에 세 스티커 — 관측자를 왼쪽 끝에 고정해 그린다 */
@@ -253,6 +267,18 @@
     var list = U.recessionFrom(obs, S.scale);
     var all = [{ id: obs, base: 0, now: 0 }].concat(list);
     var maxNow = Math.max(1, U.baseDist(1, 3) * (10 / 3));
+
+    /* 화살표 길이는 **멀어지는 양에 정비례**해야 한다.
+       예전에는 `12 + grew * 5` 처럼 고정값을 더해서, +3 cm 와 +9 cm 의 화살표가
+       3배가 아니라 2.1배로만 그려졌다. 그림이 "멀수록 그만큼 더"를 흐리고 있었다.
+       길이를 하나씩 잘라도 비가 깨지므로, **전체를 같은 비율로 줄여** 무대에 맞춘다. */
+    var aScale = Infinity;
+    all.forEach(function (item) {
+      if (item.id === obs || !(item.grew > 0)) return;
+      var ax = left + span * clamp(item.now / maxNow, 0, 1);
+      aScale = Math.min(aScale, Math.max(0, cssW - ax - 46) / item.grew);
+    });
+    aScale = isFinite(aScale) ? Math.min(aScale, 7) : 0;
 
     all.forEach(function (item) {
       var st = U.STICKERS[item.id - 1];
@@ -276,16 +302,18 @@
       if (!isObs) {
         g.fillStyle = COL.faint; g.font = "12px sans-serif";
         g.fillText(fmt(item.now) + " cm", x, cy + 30);
-        /* 멀어지는 화살표 — 길수록 빠르다.
-           ⚠ 무대 오른쪽을 넘지 않도록 잘라 준다(배율을 최대로 하면 넘친다) */
-        var alen = clamp(12 + item.grew * 5, 12, Math.max(12, cssW - x - 46));
-        g.strokeStyle = st.css; g.lineWidth = 3; g.lineCap = "round";
-        g.beginPath(); g.moveTo(x + 16, cy + 48); g.lineTo(x + 16 + alen, cy + 48); g.stroke();
+        /* 멀어지는 화살표 — 길이가 곧 멀어진 양이다(정비례, 위 aScale 참고) */
+        var alen = item.grew * aScale;
+        if (alen >= 2) {
+          g.strokeStyle = st.css; g.lineWidth = 3; g.lineCap = "round";
+          g.beginPath(); g.moveTo(x + 16, cy + 48); g.lineTo(x + 16 + alen, cy + 48); g.stroke();
+          g.fillStyle = st.css;
+          g.beginPath();
+          g.moveTo(x + 16 + alen + 8, cy + 48);
+          g.lineTo(x + 16 + alen, cy + 43); g.lineTo(x + 16 + alen, cy + 53);
+          g.closePath(); g.fill();
+        }
         g.fillStyle = st.css;
-        g.beginPath();
-        g.moveTo(x + 16 + alen + 8, cy + 48);
-        g.lineTo(x + 16 + alen, cy + 43); g.lineTo(x + 16 + alen, cy + 53);
-        g.closePath(); g.fill();
         g.font = "12px sans-serif"; g.textAlign = "left";
         g.fillText("+" + fmt(item.grew) + " cm", x + 16, cy + 70);
       }
@@ -309,7 +337,8 @@
 
   /* ---- 장면 ③ 은하의 후퇴 ---- */
   function drawHubble(g) {
-    var left = cssW * 0.10, span = cssW * 0.78;
+    /* ② 장면과 같은 이유로 오른쪽에 화살표 자리를 남긴다. */
+    var left = cssW * 0.08, span = cssW * 0.52;
     var cy = cssH * 0.30;
     var maxD = 8 * (10 / 3);
 
@@ -318,6 +347,17 @@
     g.beginPath(); g.arc(left, cy, 10, 0, Math.PI * 2); g.fill();
     g.fillStyle = COL.ink; g.font = "bold 13px sans-serif"; g.textAlign = "center";
     g.fillText("우리은하", left, cy - 20);
+
+    /* 화살표 길이는 **빠르기에 정비례**해야 한다(위 ② 장면과 같은 이유).
+       전체를 같은 비율로 줄여 무대에 맞춘다. */
+    var aScale = Infinity;
+    U.GALAXIES.forEach(function (gal) {
+      var v = U.recessionSpeed(gal.d, S.scale);
+      if (!(v > 0)) return;
+      var ax = left + span * clamp(gal.d * S.scale / maxD, 0, 1);
+      aScale = Math.min(aScale, Math.max(0, cssW - ax - 34) / v);
+    });
+    aScale = isFinite(aScale) ? Math.min(aScale, 7) : 0;
 
     U.GALAXIES.forEach(function (gal, i) {
       var now = gal.d * S.scale;
@@ -328,15 +368,16 @@
       g.beginPath(); g.ellipse(x, y, 9, 5, -0.4, 0, Math.PI * 2); g.fill();
       g.fillStyle = COL.faint; g.font = "12px sans-serif"; g.textAlign = "center";
       g.fillText(gal.name, x, y - 12);
-      /* 멀어지는 화살표 — 길이가 곧 속도.
-         ⚠ 무대 오른쪽을 넘지 않도록 잘라 준다 */
-      var alen = clamp(6 + v * 6, 6, Math.max(6, cssW - x - 34));
-      g.strokeStyle = "#f472b6"; g.lineWidth = 2.5; g.lineCap = "round";
-      g.beginPath(); g.moveTo(x + 12, y); g.lineTo(x + 12 + alen, y); g.stroke();
-      g.fillStyle = "#f472b6";
-      g.beginPath();
-      g.moveTo(x + 12 + alen + 7, y); g.lineTo(x + 12 + alen, y - 4.5); g.lineTo(x + 12 + alen, y + 4.5);
-      g.closePath(); g.fill();
+      /* 멀어지는 화살표 — 길이가 곧 빠르기다(정비례) */
+      var alen = v * aScale;
+      if (alen >= 2) {
+        g.strokeStyle = "#f472b6"; g.lineWidth = 2.5; g.lineCap = "round";
+        g.beginPath(); g.moveTo(x + 12, y); g.lineTo(x + 12 + alen, y); g.stroke();
+        g.fillStyle = "#f472b6";
+        g.beginPath();
+        g.moveTo(x + 12 + alen + 7, y); g.lineTo(x + 12 + alen, y - 4.5); g.lineTo(x + 12 + alen, y + 4.5);
+        g.closePath(); g.fill();
+      }
     });
 
     /* 거리-속도 그래프 */
@@ -353,13 +394,17 @@
     g.strokeStyle = "#f472b6"; g.lineWidth = 2.5;
     g.beginPath();
     U.GALAXIES.forEach(function (gal, i) {
-      var x = gx + gw * (gal.d / 8);
+      /* 가로축도 **지금 거리**로 잡는다. 위 그림은 지금 거리로 그리는데
+         그래프만 처음 거리로 그리면 같은 '거리'라는 말이 두 뜻이 된다. */
+      var x = gx + gw * clamp(gal.d * S.scale / maxD, 0, 1);
       var y = (gy + gh) - gh * clamp(U.recessionSpeed(gal.d, S.scale) / Math.max(maxV, 0.001), 0, 1);
       if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
     });
     g.stroke();
     U.GALAXIES.forEach(function (gal) {
-      var x = gx + gw * (gal.d / 8);
+      /* 가로축도 **지금 거리**로 잡는다. 위 그림은 지금 거리로 그리는데
+         그래프만 처음 거리로 그리면 같은 '거리'라는 말이 두 뜻이 된다. */
+      var x = gx + gw * clamp(gal.d * S.scale / maxD, 0, 1);
       var y = (gy + gh) - gh * clamp(U.recessionSpeed(gal.d, S.scale) / Math.max(maxV, 0.001), 0, 1);
       g.fillStyle = "#f472b6";
       g.beginPath(); g.arc(x, y, 4.5, 0, Math.PI * 2); g.fill();
