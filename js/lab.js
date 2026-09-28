@@ -42,7 +42,7 @@
              "어떻게 변할까? 직접 불어 보자.",
       scene: "balloon", setup: { scale: 1 }, allow: ["scale", "stage"],
       predict: { q: "풍선을 크게 불면 스티커 사이의 거리는?",
-                 opts: ["<b>모두 멀어진다</b>", "모두 가까워진다", "변하지 않는다"], ans: 0 },
+                 opts: ["모두 멀어진다", "모두 가까워진다", "변하지 않는다"], ans: 0 },
       goals: [{ key: "blown", text: "풍선을 <b>② 크게</b> 이상으로 불기" }],
       why: "<b>모두 멀어집니다.</b> 스티커는 풍선 표면의 <b>같은 자리</b>에 붙어 있고 " +
            "스스로 움직이지 않았는데도요.<br>" +
@@ -55,7 +55,7 @@
              "크게 불었을 때 <b>늘어난 양</b>은 어느 쪽이 클까?",
       scene: "balloon", setup: { scale: 1 }, allow: ["scale", "stage"],
       predict: { q: "처음에 멀리 있던 쌍의 '늘어난 양'은?",
-                 opts: ["<b>더 많이 늘어난다</b>", "더 적게 늘어난다", "똑같이 늘어난다"], ans: 0 },
+                 opts: ["더 많이 늘어난다", "더 적게 늘어난다", "똑같이 늘어난다"], ans: 0 },
       goals: [{ key: "huge", text: "<b>③ 더 크게</b> 까지 불어 늘어난 양 비교하기" }],
       why: "<b>처음에 멀수록 더 많이 늘어납니다.</b><br>" +
            "① → ③ 으로 갈 때 1-2 는 3 → 10 cm (<b>7 cm 증가</b>), " +
@@ -69,7 +69,7 @@
              "스티커 1·2·3 <b>모두에서</b> 보아 확인하자.",
       scene: "center", setup: { scale: 2, observer: 1 }, allow: ["observer", "scale"],
       predict: { q: "어느 스티커에서 보면 나머지가 멀어져 보일까?",
-                 opts: ["스티커 1 에서만", "가운데인 스티커 2 에서만", "<b>어느 스티커에서 보아도</b>"], ans: 2 },
+                 opts: ["스티커 1 에서만", "가운데인 스티커 2 에서만", "어느 스티커에서 보아도"], ans: 2 },
       goals: [
         { key: "obs1", text: "<b>스티커 1</b> 에서 보기" },
         { key: "obs2", text: "<b>스티커 2</b> 에서 보기" },
@@ -87,7 +87,7 @@
          1 에서 시작해 학생이 직접 2 로 옮기게 한다. */
       scene: "center", setup: { scale: 2, observer: 1 }, allow: ["observer", "scale"],
       predict: { q: "풍선 모형에서 스티커가 나타내는 것은?",
-                 opts: ["별 하나", "<b>은하</b>", "행성"], ans: 1 },
+                 opts: ["별 하나", "은하", "행성"], ans: 1 },
       goals: [{ key: "obs2", text: "<b>스티커 2</b> 에서 보아 확인하기" }],
       why: "<b>은하</b>입니다.<br>" +
            "· 풍선의 <b>표면</b> → 우주 공간<br>" +
@@ -101,7 +101,7 @@
       story: "은하 다섯 개가 있다. 우주가 팽창할 때 <b>어느 은하가 가장 빠르게</b> 멀어질까?",
       scene: "hubble", setup: { scale: 1 }, allow: ["scale"],
       predict: { q: "가장 빠르게 멀어지는 은하는?",
-                 opts: ["가장 가까운 은하", "<b>가장 먼 은하</b>", "모두 같은 빠르기"], ans: 1 },
+                 opts: ["가장 가까운 은하", "가장 먼 은하", "모두 같은 빠르기"], ans: 1 },
       goals: [{ key: "hubble", text: "풍선을 불어 <b>거리-속도 직선</b> 확인하기" }],
       why: "<b>가장 먼 은하</b>입니다. 속도가 거리에 <b>비례</b>하기 때문이에요.<br>" +
            "그래서 거리-속도 그래프가 <b>직선</b>이 됩니다.<br>" +
@@ -117,7 +117,7 @@
       scene: "hubble", setup: { scale: 1 }, allow: ["scale"],
       predict: { q: "우주 팽창에 대한 설명으로 옳은 것은?",
                  opts: ["우주에는 팽창의 중심이 한 곳 있다",
-                        "<b>특별한 중심 없이 모든 방향으로 균일하게 팽창한다</b>",
+                        "특별한 중심 없이 모든 방향으로 균일하게 팽창한다",
                         "은하들이 스스로 힘을 내어 달아나고 있다"], ans: 1 },
       goals: [{ key: "hubble", text: "거리-속도 직선 확인하기" }],
       why: "정리하면 이렇습니다.<br>" +
@@ -625,7 +625,9 @@
       var opts = $("mOpts"); opts.innerHTML = "";
       M.predict.opts.forEach(function (t, i) {
         var b = document.createElement("button");
-        b.type = "button"; b.className = "opt"; b.innerHTML = t;
+        b.type = "button"; b.className = "opt";
+        /* 예측 보기에는 굵은 글씨를 쓰지 않는다 — 정답만 굵으면 답이 드러난다(2026-09-28). */
+        b.innerHTML = String(t).replace(/<\/?b>/g, "");
         b.addEventListener("click", function () {
           S.predictPick = i; S.missionState = "ready"; renderMissionBody();
         });
